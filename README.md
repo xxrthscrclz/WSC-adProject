@@ -1,6 +1,6 @@
-# Campus Seat — 캠퍼스 스터디룸 · 좌석 예약
+# StudIt — Study It, 공부 환경을 위한 스터디룸 좌석 예약
 
-> **웹서버컴퓨팅 AD 프로젝트** | 학번: 20211882 | 이름: 박주호  
+> **웹서버컴퓨팅 AD 프로젝트** | 팀명: StudIt | 학번: 20211882 | 이름: 박주호  
 > **주제:** 자율주제 — 수업 시간표 + 실시간 좌석 현황 기반 스터디룸 예약 서비스  
 > **스택:** Django 6 + SQLite + Bootstrap 5
 
@@ -8,7 +8,8 @@
 
 ## 1. 프로젝트 개요
 
-캠퍼스 스터디룸 좌석을 **날짜·시간대** 기준으로 예약하는 웹 서비스입니다.  
+**StudIt**(Study It)은 캠퍼스 스터디룸 좌석을 **날짜·시간대** 기준으로 예약하는 웹 서비스입니다.  
+공부하기 좋은 환경을 찾고, 예약하는 데 도움을 주는 것이 목표입니다.  
 기존 단순 예약 시스템과 달리, **수업 시간표와의 충돌 검사**와 **동일 좌석·시간대 중복 예약 방지**를 서비스 계층에서 처리합니다.
 
 ### 차별화 포인트
@@ -46,7 +47,7 @@
 ## 3. 프로젝트 구조
 
 ```
-AD_Project_20211882_박주호/
+AD_Project_StudIt/
 ├── README.md                 ← 이 파일 (GitHub용 설명)
 ├── source_code/              ← Django 프로젝트
 │   ├── config/               ← 설정, URL, 홈 뷰
@@ -196,7 +197,7 @@ PostgreSQL 전환 시 `config/settings.py`의 `DATABASES` 설정 변경:
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": "campus_seat",
+        "NAME": "studit",
         "USER": "postgres",
         "PASSWORD": "...",
         "HOST": "localhost",

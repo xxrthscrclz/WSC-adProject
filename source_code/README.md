@@ -1,4 +1,4 @@
-# Campus Seat (source_code)
+# StudIt (source_code)
 
 Django 프로젝트 루트입니다. 실행 방법은 상위 `README.md`를 참고하세요.
 
