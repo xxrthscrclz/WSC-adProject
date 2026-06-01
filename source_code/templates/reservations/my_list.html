@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}내 예약{% endblock %}
+{% block content %}
+<h2>내 예약 목록</h2>
+<table class="table">
+  <thead>
+    <tr>
+      <th>스터디룸</th>
+      <th>좌석</th>
+      <th>날짜</th>
+      <th>시간</th>
+      <th>상태</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for reservation in reservations %}
+      <tr>
+        <td>{{ reservation.seat.room.name }}</td>
+        <td>{{ reservation.seat.seat_number }}번</td>
+        <td>{{ reservation.date }}</td>
+        <td>{{ reservation.start_time }} ~ {{ reservation.end_time }}</td>
+        <td>{{ reservation.get_status_display }}</td>
+        <td>
+          {% if reservation.status == "confirmed" %}
+            <a href="{% url 'reservations:cancel' reservation.id %}">취소</a>
+          {% endif %}
+        </td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="6" class="text-muted">예약 내역이 없습니다.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

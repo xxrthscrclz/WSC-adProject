@@ -1,0 +1,6 @@
+# report/
+
+프레임워크 비교 리포트를 `20211882.pdf` 파일명으로 저장하세요.
+
+- 표지 1페이지 + 본문 2페이지 (A4)
+- 비교 대상: Django, Spring Boot, FastAPI, Express, Flask 등 3~5개

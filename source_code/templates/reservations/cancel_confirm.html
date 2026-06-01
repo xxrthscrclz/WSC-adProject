@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}예약 취소{% endblock %}
+{% block content %}
+<h2>예약 취소</h2>
+<p>{{ reservation.seat.room.name }} · {{ reservation.seat.seat_number }}번</p>
+<p>{{ reservation.date }} {{ reservation.start_time }} ~ {{ reservation.end_time }}</p>
+<form method="post">
+  {% csrf_token %}
+  <button class="btn btn-danger" type="submit">취소 확인</button>
+  <a class="btn btn-secondary" href="{% url 'reservations:my_list' %}">돌아가기</a>
+</form>
+{% endblock %}

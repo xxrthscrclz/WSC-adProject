@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}{{ room.name }}{% endblock %}
+{% block content %}
+<h2>{{ room.name }}</h2>
+<p>{{ room.building }} {{ room.floor }}층 · {{ room.description }}</p>
+
+<h4 class="mt-4">좌석 목록</h4>
+<div class="row g-2">
+  {% for seat in room.seats.all %}
+    {% if seat.is_active %}
+      <div class="col-6 col-md-3">
+        <div class="card text-center">
+          <div class="card-body">
+            <h5>{{ seat.seat_number }}번</h5>
+            {% if user.is_authenticated %}
+              <a class="btn btn-sm btn-outline-primary" href="{% url 'reservations:create' seat.id %}">예약</a>
+            {% else %}
+              <small class="text-muted">로그인 필요</small>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    {% endif %}
+  {% empty %}
+    <p class="text-muted">등록된 좌석이 없습니다.</p>
+  {% endfor %}
+</div>
+{% endblock %}

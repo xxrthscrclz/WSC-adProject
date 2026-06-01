@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}스터디룸 목록{% endblock %}
+{% block content %}
+<h2>스터디룸 목록</h2>
+<div class="list-group">
+  {% for room in rooms %}
+    <a href="{% url 'rooms:detail' room.id %}" class="list-group-item list-group-item-action">
+      <div class="d-flex w-100 justify-content-between">
+        <h5 class="mb-1">{{ room.name }}</h5>
+        <small>{{ room.capacity }}석</small>
+      </div>
+      <p class="mb-1">{{ room.building }} {{ room.floor }}층</p>
+    </a>
+  {% empty %}
+    <p class="text-muted">등록된 스터디룸이 없습니다. 관리자 페이지에서 추가해 주세요.</p>
+  {% endfor %}
+</div>
+{% endblock %}
