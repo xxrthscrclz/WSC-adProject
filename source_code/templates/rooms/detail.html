@@ -1,28 +1,83 @@
 {% extends "base.html" %}
 {% block title %}{{ room.name }}{% endblock %}
 {% block content %}
-<h2>{{ room.name }}</h2>
-<p>{{ room.building }} {{ room.floor }}층 · {{ room.description }}</p>
+<div class="room-detail-header">
+  <div class="room-detail-header-top">
+    <div>
+      <h2 class="room-detail-title">{{ room.name }}</h2>
+      <p class="room-detail-meta">
+        {{ room.building }} {{ room.floor }}층 · {{ room.description }}
+        · <strong>{% if is_today %}오늘{% else %}선택 날짜{% endif %} 잔여 {{ availability.available }}/{{ availability.total }}석</strong>
+      </p>
+    </div>
+    <form class="room-date-filter" method="get" id="room-date-filter">
+      <label class="room-date-filter-label" for="room-date">날짜</label>
+      <input
+        class="form-control rounded-xl room-date-input"
+        type="date"
+        name="date"
+        id="room-date"
+        value="{{ selected_date }}"
+      />
+    </form>
+  </div>
+</div>
 
-<h4 class="mt-4">좌석 목록</h4>
-<div class="row g-2">
-  {% for seat in room.seats.all %}
-    {% if seat.is_active %}
-      <div class="col-6 col-md-3">
-        <div class="card text-center">
-          <div class="card-body">
-            <h5>{{ seat.seat_number }}번</h5>
-            {% if user.is_authenticated %}
-              <a class="btn btn-sm btn-outline-primary" href="{% url 'reservations:create' seat.id %}">예약</a>
-            {% else %}
-              <small class="text-muted">로그인 필요</small>
-            {% endif %}
-          </div>
-        </div>
+<h4 class="seat-list-heading">좌석 목록</h4>
+<div class="seat-table rounded-xl">
+  <div class="seat-row seat-row--header">
+    <div class="seat-col seat-col--number">좌석</div>
+    <div class="seat-col seat-col--schedule">예약된 시간</div>
+    <div class="seat-col seat-col--status">{% if is_today %}현재 상태{% else %}상태{% endif %}</div>
+    <div class="seat-col seat-col--action">예약</div>
+  </div>
+
+  {% for item in seat_items %}
+    <div class="seat-row">
+      <div class="seat-col seat-col--number">
+        <span class="seat-number-label">{{ item.seat.seat_number }}번</span>
       </div>
-    {% endif %}
+
+      <div class="seat-col seat-col--schedule">
+        {% if item.display_slots %}
+          <div class="seat-time-list">
+            {% for slot in item.display_slots %}
+              <span class="seat-time-badge seat-time-badge--{{ slot.status }}">
+                {{ slot.reservation.start_time|time:"H:i" }}~{{ slot.reservation.end_time|time:"H:i" }}
+                {% if slot.status == "active" %}· 사용중
+                {% elif slot.status == "past" %}· 종료
+                {% else %}· 예약됨{% endif %}
+              </span>
+            {% endfor %}
+          </div>
+        {% else %}
+          <span class="seat-time-empty">{% if is_today %}오늘{% else %}해당 날짜{% endif %} 예약 없음</span>
+        {% endif %}
+      </div>
+
+      <div class="seat-col seat-col--status">
+        <span class="seat-now-badge seat-now-badge--{{ item.status_variant }}">{{ item.status_label }}</span>
+      </div>
+
+      <div class="seat-col seat-col--action">
+        {% if user.is_authenticated %}
+          <a class="btn btn-sm btn-outline-primary seat-reserve-btn rounded-xl" href="{% url 'reservations:create' item.seat.id %}?date={{ selected_date }}">예약</a>
+        {% else %}
+          <span class="seat-login-hint">로그인 필요</span>
+        {% endif %}
+      </div>
+    </div>
   {% empty %}
-    <p class="text-muted">등록된 좌석이 없습니다.</p>
+    <div class="seat-row seat-row--empty">
+      <p class="text-muted mb-0">등록된 좌석이 없습니다.</p>
+    </div>
   {% endfor %}
 </div>
+{% endblock %}
+{% block extra_js %}
+<script>
+  document.getElementById("room-date")?.addEventListener("change", function () {
+    document.getElementById("room-date-filter")?.submit();
+  });
+</script>
 {% endblock %}

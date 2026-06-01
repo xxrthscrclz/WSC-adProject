@@ -1,0 +1,20 @@
+<div
+  class="mb-3 time-picker"
+  data-time-picker
+  data-name="{{ name }}"
+  data-value="{{ value|default:'' }}"
+  data-start-hour="{{ start_hour|default:8 }}"
+  data-end-hour="{{ end_hour|default:22 }}"
+  data-step="{{ step|default:30 }}"
+  {% if linked_end %}data-linked-end="{{ linked_end }}"{% endif %}
+>
+  <label class="form-label" for="{{ input_id|default:name }}">{{ label }}</label>
+  <div class="time-picker-row"></div>
+  <input
+    type="hidden"
+    name="{{ name }}"
+    id="{{ input_id|default:name }}"
+    value="{{ value|default:'' }}"
+    required
+  />
+</div>

@@ -1,0 +1,62 @@
+{% if grid %}
+<div class="weekly-timetable{% if compact %} weekly-timetable--compact{% endif %} rounded-xl">
+  <div class="weekly-timetable-header">
+    <div class="weekly-corner"></div>
+    {% for day in grid.days %}
+    <div class="weekly-day-header">{{ day.label }}</div>
+    {% endfor %}
+  </div>
+
+  <div class="weekly-timetable-body">
+    <div class="weekly-hour-column">
+      {% for slot in grid.hours %}
+      <div class="weekly-hour-label">{{ slot.label }}</div>
+      {% endfor %}
+    </div>
+
+    <div class="weekly-day-grid" style="--row-count: {{ grid.row_count }};">
+      {% for day in grid.days %}
+      <div class="weekly-day-column" data-day="{{ day.index }}">
+        {% for slot in grid.hours %}
+        <div class="weekly-cell"></div>
+        {% endfor %}
+
+        {% if show_preview %}
+        <div class="weekly-preview-block" hidden>
+          <p class="weekly-preview-label">새 수업</p>
+        </div>
+        {% endif %}
+
+        {% for block in day.blocks %}
+        <div
+          class="weekly-class-block weekly-class-block--{{ block.color_index }}{% if read_only %} weekly-class-block--readonly{% endif %}"
+          style="top: {{ block.top_pct }}%; height: {{ block.height_pct }}%;"
+        >
+          <p class="weekly-class-subject">{{ block.schedule.subject_name }}</p>
+          <p class="weekly-class-time">
+            {{ block.schedule.start_time|time:"H:i" }} ~ {{ block.schedule.end_time|time:"H:i" }}
+          </p>
+          {% if block.schedule.location %}
+          <p class="weekly-class-location">{{ block.schedule.location }}</p>
+          {% endif %}
+          {% if not read_only %}
+          <form method="post" action="{% url 'timetable:delete' block.schedule.id %}" class="weekly-class-delete">
+            {% csrf_token %}
+            <button class="btn btn-sm btn-outline-danger rounded-xl" type="submit">삭제</button>
+          </form>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% else %}
+<div class="weekly-timetable weekly-timetable--empty rounded-xl">
+  <p class="weekly-empty-text">등록된 수업이 없습니다.</p>
+  {% if not read_only %}
+  <a class="btn btn-primary rounded-xl" href="{% url 'timetable:add' %}">첫 수업 추가하기</a>
+  {% endif %}
+</div>
+{% endif %}

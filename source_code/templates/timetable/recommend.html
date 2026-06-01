@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}AI 학습 시간 추천{% endblock %}
+{% block content %}
+<div class="recommend-page">
+  <div class="recommend-header">
+    <div>
+      <h2 class="recommend-title">AI 학습 시간 추천</h2>
+      <p class="recommend-subtitle">
+        등록한 수업 시간표와 예약 현황을 분석해, 공부하기 좋은 시간대를 추천합니다.
+      </p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+      <a class="btn btn-outline-primary rounded-xl" href="{% url 'timetable:list' %}">시간표 관리</a>
+      <a class="btn btn-primary rounded-xl" href="{% url 'timetable:recommend' %}">다시 추천받기</a>
+    </div>
+  </div>
+
+  <div class="alert {% if recommendation.llm_used %}alert-success{% else %}alert-secondary{% endif %} rounded-xl recommend-status">
+    <strong>{% if recommendation.llm_used %}Gemini AI 연결 성공!{% else %}StudIt AI 분석{% endif %}</strong>
+    · {{ recommendation.llm_status }}
+  </div>
+
+  <div class="row g-4">
+    <div class="col-lg-5">
+      <div class="card rounded-xl recommend-panel h-100">
+        <div class="card-body">
+          <h5 class="card-title">내 수업 시간표</h5>
+          {% if recommendation.has_schedules %}
+            {% include "includes/weekly_timetable.html" with grid=recommendation.grid read_only=True %}
+          {% else %}
+            <p class="text-muted mb-3">
+              아직 등록된 수업이 없습니다. 시간표를 등록하면 더 정확한 추천을 받을 수 있습니다.
+            </p>
+            <a class="btn btn-sm btn-outline-primary rounded-xl" href="{% url 'timetable:add' %}">시간표 추가</a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-7">
+      <div class="card rounded-xl recommend-panel mb-4">
+        <div class="card-body">
+          <h5 class="card-title">AI 코멘트</h5>
+          <p class="recommend-summary mb-3">{{ recommendation.summary }}</p>
+          <div class="recommend-tips">
+            <h6 class="text-primary mb-2">추천 공부 방식</h6>
+            <p class="mb-0">{{ recommendation.study_tips }}</p>
+          </div>
+        </div>
+      </div>
+
+      {% if recommendation.slots %}
+        <div class="recommend-slots">
+          {% for slot in recommendation.slots %}
+            <div class="card rounded-xl recommend-slot-card mb-3">
+              <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+                  <div>
+                    <span class="badge text-bg-primary recommend-badge">{{ slot.day_label }}요일</span>
+                    <span class="badge text-bg-light text-dark recommend-badge">{{ slot.title }}</span>
+                    <h5 class="mt-2 mb-1">
+                      {{ slot.date_str }} · {{ slot.start_str }} ~ {{ slot.end_str }}
+                    </h5>
+                    <p class="text-muted small mb-0">{{ slot.room_name }} · {{ slot.seat.seat_number }}번 좌석 예약 가능</p>
+                  </div>
+                  <a
+                    class="btn btn-primary rounded-xl recommend-book-btn"
+                    href="{% url 'reservations:create' slot.seat_id %}?date={{ slot.date_str }}&start_time={{ slot.start_str }}&end_time={{ slot.end_str }}"
+                  >
+                    이 시간으로 예약
+                  </a>
+                </div>
+                <hr />
+                <p class="mb-2"><strong>왜 이 시간?</strong> {{ slot.comment }}</p>
+                <p class="mb-0 text-muted"><strong>공부 방법</strong> · {{ slot.study_method }}</p>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="card rounded-xl recommend-panel">
+          <div class="card-body text-center py-5">
+            <p class="text-muted mb-3">
+              앞으로 일주일간 예약 가능한 학습 시간을 찾지 못했습니다.<br />
+              시간표나 기존 예약을 확인해 주세요.
+            </p>
+            <a class="btn btn-primary rounded-xl" href="{% url 'rooms:list' %}">스터디룸 보러가기</a>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

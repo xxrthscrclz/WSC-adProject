@@ -2,15 +2,19 @@
 {% block title %}스터디룸 목록{% endblock %}
 {% block content %}
 <h2>스터디룸 목록</h2>
-<div class="list-group">
-  {% for room in rooms %}
-    <a href="{% url 'rooms:detail' room.id %}" class="list-group-item list-group-item-action">
-      <div class="d-flex w-100 justify-content-between">
-        <h5 class="mb-1">{{ room.name }}</h5>
-        <small>{{ room.capacity }}석</small>
-      </div>
-      <p class="mb-1">{{ room.building }} {{ room.floor }}층</p>
-    </a>
+<div class="room-list">
+  {% for item in room_items %}
+    {% with room=item.room availability=item.availability %}
+      <a href="{% url 'rooms:detail' room.id %}" class="room-card">
+        <div class="room-card-inner">
+          <div class="room-card-text">
+            <p class="room-name">{{ room.name }}</p>
+            <p class="room-location">{{ room.building }} {{ room.floor }}층</p>
+          </div>
+          <span class="room-capacity">잔여 {{ availability.available }}/{{ availability.total }}석</span>
+        </div>
+      </a>
+    {% endwith %}
   {% empty %}
     <p class="text-muted">등록된 스터디룸이 없습니다. 관리자 페이지에서 추가해 주세요.</p>
   {% endfor %}

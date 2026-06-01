@@ -1,26 +1,365 @@
 {% extends "base.html" %}
 {% block title %}좌석 예약{% endblock %}
 {% block content %}
-<h2>{{ seat.room.name }} · {{ seat.seat_number }}번 예약</h2>
+<div class="reservation-page">
+  <div class="panel-card reservation-form-card">
+    <div class="panel-card-header">
+      <h2 class="panel-title">
+        {{ seat.room.name }} · {{ seat.seat_number }}번 예약
+      </h2>
+      <p class="panel-subtitle">
+        {{ seat.room.building }} {{ seat.room.floor }}층
+      </p>
+    </div>
 
-{% if error_message %}
-  <div class="alert alert-danger">{{ error_message }}</div>
-{% endif %}
+    <form method="post" id="reservation-form">
+      {% csrf_token %}
+      <div class="mb-3">
+        <label class="form-label" for="reservation-date">날짜</label>
+        <input
+          class="form-control rounded-xl"
+          type="date"
+          name="date"
+          id="reservation-date"
+          value="{{ form_date }}"
+          min="{{ min_date }}"
+          required
+        />
+      </div>
+      {% include "includes/time_picker.html" with name="start_time" label="시작 시간" value=form_start_time start_hour=9 end_hour=22 step=60 input_id="start-time" linked_end="end-time" %}
+      {% include "includes/time_picker.html" with name="end_time" label="종료 시간" value=form_end_time start_hour=10 end_hour=23 step=60 input_id="end-time" %}
+      <div class="reservation-form-actions">
+        <button class="btn btn-outline-secondary rounded-xl" type="button" data-bs-toggle="modal" data-bs-target="#classScheduleModal">
+          내 수업 시간표
+        </button>
+        <button class="btn btn-primary rounded-xl flex-grow-1" type="submit">예약하기</button>
+      </div>
+    </form>
+  </div>
 
-<form method="post" class="col-md-6">
-  {% csrf_token %}
-  <div class="mb-3">
-    <label class="form-label">날짜</label>
-    <input class="form-control" type="date" name="date" required>
+  <div class="panel-card reservation-schedule-card">
+    <div class="panel-card-header">
+      <h3 class="panel-title-sm">선택 날짜 예약 현황</h3>
+      <p class="panel-subtitle">
+        09:00 ~ 23:00 · 빈 시간 첫 클릭은 시작, 두 번째 클릭은 종료입니다. (사이에 예약이 있으면 다시 시작부터)
+      </p>
+    </div>
+
+    {% if timetable_legend %}
+    <ul class="timetable-legend">
+      {% for item in timetable_legend %}
+      <li class="timetable-legend-item">
+        <span class="timetable-legend-swatch" data-legend-color="{{ item.color }}"></span>
+        <span>{{ item.user_name }}</span>
+      </li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+
+    <div class="hourly-timetable">
+      {% for slot in hourly_timetable %}
+      <div
+        class="hourly-row{% if slot.status != 'free' %} hourly-row--booked hourly-row--{{ slot.status }}{% else %} hourly-row--selectable{% endif %}{% if slot.is_mine %} hourly-row--mine{% endif %}"
+        data-slot-start="{{ slot.label }}"
+        data-slot-end="{{ slot.end_label }}"
+        {% if slot.status == "free" %}
+        role="button"
+        tabindex="0"
+        aria-label="{{ slot.label }}부터 {{ slot.end_label }}까지 예약 시간 선택"
+        {% endif %}
+        {% if slot.color %}data-slot-color="{{ slot.color }}"{% endif %}
+      >
+        <span class="hourly-time">{{ slot.label }}</span>
+        <div class="hourly-bar">
+          {% if slot.status == "free" %}
+          <span class="hourly-bar-label hourly-bar-label--free">비어 있음</span>
+          {% else %}
+          <span class="hourly-bar-label">{{ slot.user_name }}</span>
+          <span class="hourly-bar-status">
+            {% if slot.status == "active" %}사용중
+            {% elif slot.status == "upcoming" %}예약됨
+            {% elif slot.status == "past" %}종료
+            {% else %}예약됨{% endif %}
+          </span>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
   </div>
-  <div class="mb-3">
-    <label class="form-label">시작 시간</label>
-    <input class="form-control" type="time" name="start_time" required>
+</div>
+
+<div class="modal fade" id="reservationSuccessModal" tabindex="-1" aria-labelledby="reservationSuccessModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content cancel-modal rounded-xl">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title fw-bold" id="reservationSuccessModalLabel">예약 완료</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="닫기"></button>
+      </div>
+      <div class="modal-body">
+        <p class="cancel-modal-room mb-0">{{ success_message }}</p>
+      </div>
+      <div class="modal-footer border-0 pt-0">
+        <div class="cancel-modal-actions">
+          <a class="btn btn-primary rounded-xl" href="{% url 'reservations:my_list' %}">내 예약 보기</a>
+          <button class="btn btn-secondary rounded-xl" type="button" data-bs-dismiss="modal">닫기</button>
+        </div>
+      </div>
+    </div>
   </div>
-  <div class="mb-3">
-    <label class="form-label">종료 시간</label>
-    <input class="form-control" type="time" name="end_time" required>
+</div>
+
+<div class="modal fade" id="reservationErrorModal" tabindex="-1" aria-labelledby="reservationErrorModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content cancel-modal rounded-xl">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title fw-bold" id="reservationErrorModalLabel">예약할 수 없습니다</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="닫기"></button>
+      </div>
+      <div class="modal-body">
+        <p class="cancel-modal-datetime mb-0" id="reservationErrorMessage">{{ error_message }}</p>
+      </div>
+      <div class="modal-footer border-0 pt-0">
+        <button class="btn btn-primary rounded-xl" type="button" data-bs-dismiss="modal">확인</button>
+      </div>
+    </div>
   </div>
-  <button class="btn btn-primary" type="submit">예약하기</button>
-</form>
+</div>
+
+<div class="modal fade" id="classScheduleModal" tabindex="-1" aria-labelledby="classScheduleModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-xl">
+    <div class="modal-content class-schedule-modal rounded-xl">
+      <div class="modal-header border-0 pb-0">
+        <div>
+          <h5 class="modal-title fw-bold" id="classScheduleModalLabel">내 수업 시간표</h5>
+          {% if class_grid %}
+          <p class="class-schedule-modal-subtitle mb-0">
+            {{ class_grid.start_hour|stringformat:"02d" }}:00 ~ {{ class_grid.end_hour|stringformat:"02d" }}:00 · 수업과 겹치지 않게 예약해 주세요.
+          </p>
+          {% endif %}
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="닫기"></button>
+      </div>
+      <div class="modal-body pt-3">
+        {% if has_class_schedules %}
+          {% include "includes/weekly_timetable.html" with grid=class_grid read_only=True compact=True %}
+        {% else %}
+          <p class="weekly-empty-text mb-3">등록된 수업이 없습니다.</p>
+          <a class="btn btn-primary rounded-xl" href="{% url 'timetable:add' %}">수업 시간표 등록하기</a>
+        {% endif %}
+      </div>
+      <div class="modal-footer border-0 pt-0">
+        <button class="btn btn-secondary rounded-xl" type="button" data-bs-dismiss="modal">닫기</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.querySelectorAll("[data-legend-color]").forEach(function (el) {
+    el.style.backgroundColor = el.dataset.legendColor;
+  });
+  document.querySelectorAll("[data-slot-color]").forEach(function (el) {
+    el.style.setProperty("--slot-color", el.dataset.slotColor);
+  });
+
+  document
+    .getElementById("reservation-date")
+    .addEventListener("change", function () {
+      if (this.value) {
+        window.location.href =
+          "{% url 'reservations:create' seat.id %}?date=" + this.value;
+      }
+    });
+</script>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  let rangeAnchorStart = null;
+  let awaitingEnd = false;
+  let rangeComplete = false;
+  let suppressSelectionSync = false;
+
+  function timeToMinutes(value) {
+    if (!value) {
+      return 0;
+    }
+    const parts = value.split(":");
+    return parseInt(parts[0], 10) * 60 + (parseInt(parts[1], 10) || 0);
+  }
+
+  function slotInSelectedRange(slotStart, slotEnd, rangeStart, rangeEnd) {
+    return (
+      timeToMinutes(slotStart) < timeToMinutes(rangeEnd) &&
+      timeToMinutes(slotEnd) > timeToMinutes(rangeStart)
+    );
+  }
+
+  function hasBookedBetween(startTime, endTime) {
+    let found = false;
+    document.querySelectorAll(".hourly-row--booked[data-slot-start]").forEach(function (row) {
+      if (
+        slotInSelectedRange(
+          row.dataset.slotStart,
+          row.dataset.slotEnd,
+          startTime,
+          endTime
+        )
+      ) {
+        found = true;
+      }
+    });
+    return found;
+  }
+
+  function applyRangeToForm(start, end) {
+    if (typeof window.setTimePickerValue !== "function") {
+      return;
+    }
+
+    suppressSelectionSync = true;
+    window.setTimePickerValue("start-time", start);
+    window.setTimePickerValue("end-time", end);
+    suppressSelectionSync = false;
+    syncSelectedHourlySlot();
+  }
+
+  function beginStartSelection(row) {
+    rangeAnchorStart = row.dataset.slotStart;
+    awaitingEnd = true;
+    rangeComplete = false;
+    applyRangeToForm(row.dataset.slotStart, row.dataset.slotEnd);
+  }
+
+  function syncSelectedHourlySlot() {
+    const startInput = document.getElementById("start-time");
+    const endInput = document.getElementById("end-time");
+    if (!startInput || !endInput) {
+      return;
+    }
+
+    const start = startInput.value;
+    const end = endInput.value;
+    const hasValidRange =
+      start && end && timeToMinutes(end) > timeToMinutes(start);
+
+    document.querySelectorAll(".hourly-row[data-slot-start]").forEach(function (row) {
+      const matched =
+        hasValidRange &&
+        slotInSelectedRange(
+          row.dataset.slotStart,
+          row.dataset.slotEnd,
+          start,
+          end
+        );
+      row.classList.toggle("hourly-row--selected", matched);
+      if (row.classList.contains("hourly-row--selectable")) {
+        row.setAttribute("aria-pressed", matched ? "true" : "false");
+      }
+    });
+  }
+
+  function syncSelectionStateFromForm() {
+    if (suppressSelectionSync) {
+      return;
+    }
+
+    const start = document.getElementById("start-time")?.value;
+    const end = document.getElementById("end-time")?.value;
+
+    if (start && end && timeToMinutes(end) > timeToMinutes(start)) {
+      rangeAnchorStart = start;
+      awaitingEnd = false;
+      rangeComplete = true;
+    } else if (start) {
+      rangeAnchorStart = start;
+      awaitingEnd = true;
+      rangeComplete = false;
+    } else {
+      rangeAnchorStart = null;
+      awaitingEnd = false;
+      rangeComplete = false;
+    }
+
+    syncSelectedHourlySlot();
+  }
+
+  function selectHourlySlot(row) {
+    const slotStart = row.dataset.slotStart;
+    const slotEnd = row.dataset.slotEnd;
+    if (!slotStart || !slotEnd) {
+      return;
+    }
+
+    if (rangeComplete || !awaitingEnd) {
+      beginStartSelection(row);
+      return;
+    }
+
+    const anchorMinutes = timeToMinutes(rangeAnchorStart);
+    const clickStartMinutes = timeToMinutes(slotStart);
+
+    if (clickStartMinutes <= anchorMinutes) {
+      beginStartSelection(row);
+      return;
+    }
+
+    if (hasBookedBetween(rangeAnchorStart, slotEnd)) {
+      beginStartSelection(row);
+      return;
+    }
+
+    applyRangeToForm(rangeAnchorStart, slotEnd);
+    awaitingEnd = false;
+    rangeComplete = true;
+  }
+
+  const hourlyTimetable = document.querySelector(".hourly-timetable");
+  if (hourlyTimetable) {
+    hourlyTimetable.addEventListener("click", function (event) {
+      const row = event.target.closest(".hourly-row--selectable");
+      if (!row) {
+        return;
+      }
+      event.preventDefault();
+      selectHourlySlot(row);
+    });
+
+    hourlyTimetable.addEventListener("keydown", function (event) {
+      if (event.key !== "Enter" && event.key !== " ") {
+        return;
+      }
+      const row = event.target.closest(".hourly-row--selectable");
+      if (!row) {
+        return;
+      }
+      event.preventDefault();
+      selectHourlySlot(row);
+    });
+  }
+
+  document.querySelectorAll(".hourly-row--selectable").forEach(function (row) {
+    row.setAttribute("tabindex", "0");
+  });
+
+  document.querySelectorAll("[data-time-picker]").forEach(function (picker) {
+    picker.addEventListener("timechange", syncSelectionStateFromForm);
+  });
+
+  syncSelectedHourlySlot();
+</script>
+<script>
+  {% if error_message %}
+  bootstrap.Modal.getOrCreateInstance(
+    document.getElementById("reservationErrorModal")
+  ).show();
+  {% endif %}
+
+  {% if success_message %}
+  bootstrap.Modal.getOrCreateInstance(
+    document.getElementById("reservationSuccessModal")
+  ).show();
+  {% endif %}
+</script>
 {% endblock %}

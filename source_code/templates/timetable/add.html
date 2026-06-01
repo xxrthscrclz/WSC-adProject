@@ -1,37 +1,60 @@
 {% extends "base.html" %}
 {% block title %}시간표 추가{% endblock %}
 {% block content %}
-<h2>수업 시간표 추가</h2>
-<form method="post" class="col-md-6">
-  {% csrf_token %}
-  <div class="mb-3">
-    <label class="form-label">요일</label>
-    <select class="form-select" name="day_of_week" required>
-      <option value="0">월</option>
-      <option value="1">화</option>
-      <option value="2">수</option>
-      <option value="3">목</option>
-      <option value="4">금</option>
-      <option value="5">토</option>
-      <option value="6">일</option>
-    </select>
+<div class="schedule-add-page">
+  <div class="panel-card rounded-xl schedule-add-form">
+    <div class="panel-card-header">
+      <h2 class="panel-title">수업 시간표 추가</h2>
+      <p class="panel-subtitle">수업 시간을 등록하면 예약 시 자동으로 충돌을 검사합니다.</p>
+    </div>
+
+    <form method="post" id="schedule-add-form">
+      {% csrf_token %}
+      <div class="mb-3">
+        <label class="form-label" for="day-of-week">요일</label>
+        <select class="form-select rounded-xl" name="day_of_week" id="day-of-week" required>
+          <option value="0">월</option>
+          <option value="1">화</option>
+          <option value="2">수</option>
+          <option value="3">목</option>
+          <option value="4">금</option>
+          <option value="5">토</option>
+          <option value="6">일</option>
+        </select>
+      </div>
+      <div class="mb-3">
+        <label class="form-label" for="subject-name">과목명</label>
+        <input class="form-control rounded-xl" type="text" name="subject_name" id="subject-name" required>
+      </div>
+      {% include "includes/time_picker.html" with name="start_time" label="시작 시간" start_hour=8 end_hour=22 step=30 input_id="schedule-start-time" linked_end="schedule-end-time" %}
+      {% include "includes/time_picker.html" with name="end_time" label="종료 시간" start_hour=8 end_hour=23 step=30 input_id="schedule-end-time" %}
+      <div class="mb-3">
+        <label class="form-label" for="location">강의실</label>
+        <input class="form-control rounded-xl" type="text" name="location" id="location">
+      </div>
+      <button class="btn btn-primary rounded-xl" type="submit">저장</button>
+    </form>
   </div>
-  <div class="mb-3">
-    <label class="form-label">과목명</label>
-    <input class="form-control" type="text" name="subject_name" required>
+
+  <div class="panel-card rounded-xl schedule-add-preview">
+    <div class="panel-card-header">
+      <h3 class="panel-title-sm">시간표 미리보기</h3>
+      <p class="panel-subtitle">
+        {{ class_grid.start_hour|stringformat:"02d" }}:00 ~ {{ class_grid.end_hour|stringformat:"02d" }}:00 · 선택한 시간이 옅은 파란색으로 표시됩니다.
+      </p>
+    </div>
+
+    <div
+      id="schedule-preview"
+      data-start-hour="{{ class_grid.start_hour }}"
+      data-end-hour="{{ class_grid.end_hour }}"
+    >
+      {% include "includes/weekly_timetable.html" with grid=class_grid read_only=True compact=True show_preview=True %}
+    </div>
   </div>
-  <div class="mb-3">
-    <label class="form-label">시작 시간</label>
-    <input class="form-control" type="time" name="start_time" required>
-  </div>
-  <div class="mb-3">
-    <label class="form-label">종료 시간</label>
-    <input class="form-control" type="time" name="end_time" required>
-  </div>
-  <div class="mb-3">
-    <label class="form-label">강의실</label>
-    <input class="form-control" type="text" name="location">
-  </div>
-  <button class="btn btn-primary" type="submit">저장</button>
-</form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="/static/js/schedule_preview.js"></script>
 {% endblock %}

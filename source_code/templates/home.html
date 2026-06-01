@@ -1,41 +1,55 @@
 {% extends "base.html" %}
-
 {% block title %}StudIt - Study It, 공부 환경을 위한 좌석 예약{% endblock %}
-
 {% block content %}
-<div class="hero p-4 p-md-5 mb-4 rounded-3 bg-light border">
-  <h1 class="display-6 fw-bold">StudIt <small class="text-muted fs-5">Study It</small></h1>
-  <p class="lead mb-0">수업 시간표와 겹치지 않게, 스터디룸 좌석을 예약하고 더 나은 공부 환경을 만드세요.</p>
+<div class="hero rounded-xl p-4 p-md-5 mb-4 bg-light border">
+  <h1 class="display-6 fw-bold">
+    StudIt <small class="text-muted fs-5">Study It</small>
+  </h1>
+  <p class="lead mb-0">
+    수업 시간표와 겹치지 않게, 스터디룸 좌석을 예약하고 더 나은 공부 환경을
+    만드세요.
+  </p>
 </div>
 
-<div class="row g-3">
-  <div class="col-md-4">
-    <div class="card h-100">
-      <div class="card-body">
-        <h5 class="card-title">1. 시간표 등록</h5>
-        <p class="card-text">수업 시간을 등록하면 예약 시 자동으로 충돌을 검사합니다.</p>
-      </div>
+<div class="d-flex flex-column gap-3 w-100">
+  <div class="card rounded-xl w-100">
+    <div class="card-body">
+      <h5 class="card-title">1. 시간표 등록</h5>
+      <p class="card-text mb-0">
+        수업 시간을 등록하여, 스터디룸 예약을 간편하게 할 수 있도록 도와줍니다.
+      </p>
     </div>
   </div>
-  <div class="col-md-4">
-    <div class="card h-100">
-      <div class="card-body">
-        <h5 class="card-title">2. 좌석 현황 확인</h5>
-        <p class="card-text">스터디룸별 좌석을 날짜·시간대 기준으로 확인합니다.</p>
-      </div>
+  <div class="card rounded-xl w-100">
+    <div class="card-body">
+      <h5 class="card-title">2. 좌석 현황 확인</h5>
+      <p class="card-text mb-0">
+        실시간 예약 현황 및 요일별 예약 가능 시간 조회가 가능합니다.
+      </p>
     </div>
   </div>
-  <div class="col-md-4">
-    <div class="card h-100">
-      <div class="card-body">
-        <h5 class="card-title">3. 중복 없이 예약</h5>
-        <p class="card-text">같은 좌석·시간대 중복 예약을 서비스 계층에서 차단합니다.</p>
+  <div class="card rounded-xl w-100">
+    <div class="card-body d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+      <div>
+        <h5 class="card-title mb-2">3. AI 학습 시간 추천</h5>
+        <p class="card-text mb-0">
+          등록한 수업 시간표와 좌석 예약 현황을 바탕으로, 공부하기 좋은 시간대를 AI가 추천합니다.
+          Google Gemini 무료 API 연동으로 기존 스터디룸 예약 서비스와 차별화합니다.
+        </p>
       </div>
+      {% if user.is_authenticated %}
+      <a class="btn btn-outline-primary rounded-xl flex-shrink-0" href="{% url 'timetable:recommend' %}">추천 받기</a>
+      {% else %}
+      <a class="btn btn-outline-secondary rounded-xl flex-shrink-0" href="{% url 'accounts:login' %}">로그인 후 이용</a>
+      {% endif %}
     </div>
   </div>
 </div>
 
-<div class="mt-4">
-  <a class="btn btn-primary" href="{% url 'rooms:list' %}">스터디룸 보러가기</a>
+<div class="mt-4 d-flex flex-wrap gap-2">
+  <a class="btn btn-primary rounded-xl" href="{% url 'rooms:list' %}">스터디룸 보러가기</a>
+  {% if user.is_authenticated %}
+  <a class="btn btn-outline-primary rounded-xl" href="{% url 'timetable:recommend' %}">AI 학습 시간 추천</a>
+  {% endif %}
 </div>
 {% endblock %}

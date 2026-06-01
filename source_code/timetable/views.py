@@ -1,17 +1,28 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
 
+from .grid import build_weekly_grid
 from .models import ClassSchedule
 
 
 @login_required
 def schedule_list(request):
     schedules = ClassSchedule.objects.filter(user=request.user)
-    return render(request, "timetable/list.html", {"schedules": schedules})
+    grid = build_weekly_grid(schedules)
+    return render(
+        request,
+        "timetable/list.html",
+        {
+            "schedules": schedules,
+            "grid": grid,
+        },
+    )
 
 
 @login_required
 def schedule_add(request):
+    class_schedules = ClassSchedule.objects.filter(user=request.user)
+
     if request.method == "POST":
         ClassSchedule.objects.create(
             user=request.user,
@@ -23,7 +34,14 @@ def schedule_add(request):
         )
         return redirect("timetable:list")
 
-    return render(request, "timetable/add.html")
+    return render(
+        request,
+        "timetable/add.html",
+        {
+            "class_grid": build_weekly_grid(class_schedules, force_start=8, force_end=23),
+            "has_class_schedules": class_schedules.exists(),
+        },
+    )
 
 
 @login_required
@@ -32,3 +50,11 @@ def schedule_delete(request, schedule_id):
     if request.method == "POST":
         schedule.delete()
     return redirect("timetable:list")
+
+
+@login_required
+def study_recommend(request):
+    from .recommendation import generate_recommendations
+
+    result = generate_recommendations(request.user)
+    return render(request, "timetable/recommend.html", {"recommendation": result})

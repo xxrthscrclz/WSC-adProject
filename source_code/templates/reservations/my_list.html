@@ -1,35 +1,99 @@
 {% extends "base.html" %}
 {% block title %}내 예약{% endblock %}
 {% block content %}
-<h2>내 예약 목록</h2>
-<table class="table">
-  <thead>
-    <tr>
-      <th>스터디룸</th>
-      <th>좌석</th>
-      <th>날짜</th>
-      <th>시간</th>
-      <th>상태</th>
-      <th></th>
-    </tr>
-  </thead>
-  <tbody>
+<div class="reservation-list-header">
+  <h2 class="reservation-list-title">내 예약 목록</h2>
+  <p class="reservation-list-subtitle">예약한 스터디룸 좌석을 확인하고 관리할 수 있어요.</p>
+</div>
+
+{% if reservations %}
+  <div class="reservation-list">
     {% for reservation in reservations %}
-      <tr>
-        <td>{{ reservation.seat.room.name }}</td>
-        <td>{{ reservation.seat.seat_number }}번</td>
-        <td>{{ reservation.date }}</td>
-        <td>{{ reservation.start_time }} ~ {{ reservation.end_time }}</td>
-        <td>{{ reservation.get_status_display }}</td>
-        <td>
+      <article class="reservation-card rounded-xl{% if reservation.status == 'cancelled' %} reservation-card--cancelled{% endif %}">
+        <div class="reservation-card-body">
+          <h3 class="reservation-card-title">
+            {{ reservation.seat.room.name }} · {{ reservation.seat.seat_number }}번
+          </h3>
+          <p class="reservation-card-location">
+            {{ reservation.seat.room.building }} {{ reservation.seat.room.floor }}층
+          </p>
+
+          <div class="reservation-card-details">
+            <span class="reservation-detail">
+              <span class="reservation-detail-label">날짜</span>
+              {{ reservation.date|date:"Y년 n월 j일" }}
+            </span>
+            <span class="reservation-detail">
+              <span class="reservation-detail-label">시간</span>
+              {{ reservation.start_time|time:"H:i" }} ~ {{ reservation.end_time|time:"H:i" }}
+            </span>
+          </div>
+        </div>
+
+        <div class="reservation-card-actions">
+          <span class="reservation-status reservation-status--{{ reservation.status }}">
+            {{ reservation.get_status_display }}
+          </span>
           {% if reservation.status == "confirmed" %}
-            <a href="{% url 'reservations:cancel' reservation.id %}">취소</a>
+            <button type="button"
+                    class="btn btn-sm btn-outline-danger reservation-cancel-btn rounded-xl"
+                    data-cancel-reservation
+                    data-room="{{ reservation.seat.room.name }} · {{ reservation.seat.seat_number }}번"
+                    data-datetime="{{ reservation.date|date:'Y년 n월 j일' }} {{ reservation.start_time|time:'H:i' }} ~ {{ reservation.end_time|time:'H:i' }}"
+                    data-cancel-url="{% url 'reservations:cancel' reservation.id %}">
+              취소
+            </button>
           {% endif %}
-        </td>
-      </tr>
-    {% empty %}
-      <tr><td colspan="6" class="text-muted">예약 내역이 없습니다.</td></tr>
+        </div>
+      </article>
     {% endfor %}
-  </tbody>
-</table>
+  </div>
+{% else %}
+  <p class="reservation-empty rounded-xl">예약 내역이 없습니다.</p>
+{% endif %}
+
+<div class="modal fade" id="cancelReservationModal" tabindex="-1" aria-labelledby="cancelReservationModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content cancel-modal rounded-xl">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title fw-bold" id="cancelReservationModalLabel">예약 취소</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="닫기"></button>
+      </div>
+      <div class="modal-body">
+        <p class="cancel-modal-room mb-1" id="cancelModalRoom"></p>
+        <p class="cancel-modal-datetime mb-0 text-muted" id="cancelModalDateTime"></p>
+      </div>
+      <div class="modal-footer border-0 pt-0">
+        <form method="post" id="cancelReservationForm">
+          {% csrf_token %}
+          <div class="cancel-modal-actions">
+            <button class="btn btn-danger rounded-xl" type="submit">예약 취소</button>
+            <button class="btn btn-secondary rounded-xl" type="button" data-bs-dismiss="modal">돌아가기</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  (function () {
+    const modalEl = document.getElementById("cancelReservationModal");
+    const roomEl = document.getElementById("cancelModalRoom");
+    const datetimeEl = document.getElementById("cancelModalDateTime");
+    const formEl = document.getElementById("cancelReservationForm");
+    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+
+    document.querySelectorAll("[data-cancel-reservation]").forEach(function (button) {
+      button.addEventListener("click", function () {
+        roomEl.textContent = button.dataset.room;
+        datetimeEl.textContent = button.dataset.datetime;
+        formEl.action = button.dataset.cancelUrl;
+        modal.show();
+      });
+    });
+  })();
+</script>
 {% endblock %}
