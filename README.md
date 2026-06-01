@@ -174,11 +174,11 @@ GEMINI_MODEL=gemini-2.5-flash-lite
 
 ## 6. GitHub
 
-> 저장소 URL: https://github.com/xxrthscrclz/WSC-adProject
+> 저장소 URL: https://github.com/xxrthscrclz/AD_Project_STUDIT
 
 ```bash
-git clone https://github.com/xxrthscrclz/WSC-adProject.git
-cd WSC-adProject/source_code
+git clone https://github.com/xxrthscrclz/AD_Project_STUDIT.git
+cd AD_Project_STUDIT/source_code
 pip install -r requirements.txt
 cp .env.example .env   # API 키 설정
 python manage.py migrate
