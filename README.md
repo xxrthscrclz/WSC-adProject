@@ -209,7 +209,7 @@ DATABASES = {
 
 ## 10. GitHub
 
-> 저장소 URL: _(GitHub 생성 후 여기에 추가)_
+> 저장소 URL: https://github.com/xxrthscrclz/WSC-adProject
 
 ```bash
 git init
